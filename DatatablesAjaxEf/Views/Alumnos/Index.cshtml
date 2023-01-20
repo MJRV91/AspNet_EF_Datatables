@@ -1,0 +1,152 @@
+﻿@{
+	ViewData["Title"] = "Index";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<head>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs5/dt-1.13.1/datatables.min.css" />
+	<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+</head>
+
+<div class="card card-info">
+	<div class="card-header">
+		<h3 class="text-center">ALUMNOS</h3>
+	</div>
+	<div class="card-body">
+		<div class="row">
+			<div class="col">
+				<input type="hidden" id="id_alumno" value="" />
+				<label>Nombre:</label>
+				<input type="text" class="form-control" placeholder="Nombres" id="nombre" name="nombre">
+			</div>
+			<div class="col">
+				<label>Apellido:</label>
+				<input type="text" class="form-control" placeholder="Apellidos" id="apellido" name="apellido">
+			</div>
+		</div>
+		<br />
+		<div class="row">
+			<div class="col">
+				<input type="hidden" id="id_alumno" value="" />
+				<label>Documento:</label>
+				<input type="number" class="form-control" placeholder="Documento" id="documento" name="documento">
+			</div>
+		</div>
+		<br />
+		<div class="row">
+			<div class="col-md-6">
+				<button id="btnsave" class="btn btn-success btn-sm">Guardar</button>
+				<button id="btnAddnew" class="btn btn-primary btn-sm">Limpiar Datos</button>
+			</div>
+		</div>
+		<br />
+		<table id="tblalumno" class="table table-striped table-bordered" style="width: 100%">
+			<thead>
+				<tr>
+					<th class="d-none">id_alumno</th>
+					<th>Nombres</th>
+					<th>Apellidos</th>
+					<th>Documento</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody></tbody>
+		</table>
+	</div>
+</div>
+@section Scripts {
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+	<script type="text/javascript" src="https://cdn.datatables.net/v/bs5/dt-1.13.1/datatables.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$('#tblalumno').DataTable({
+				"ajax": {
+					"type": "GET",
+					"url": "/api/ApiAlumnos",
+					"dataSrc": ""
+				},
+				"pageLength": 15,
+				"language": {
+					"lengthMenu": "Mostrar _MENU_ registros por pagina",
+					"zeroRecords": "No se encontraron registros",
+					"info": "Mostrar pagina _PAGE_ de _PAGES_",
+					"infoEmpty": "No se encontraron registros",
+					"infoFiltered": "(filtrado de _MAX_ registros totales)",
+					"search": "Buscar:",
+					"paginate": {
+						"next": "siguiente",
+						"previous": "Anterior"
+					}
+				},
+				"scrollX": true,
+				"responsive": true,
+				"columns": [
+					{ data: 'id_alumno', "visible": false },
+					{ data: 'nombre' },
+					{ data: 'apellido' },
+					{ data: 'documento' },
+					{
+						data: "id", render: function (data, type, row, meta) {
+							return "<button class='btn btn-success btn-sm' onclick='Edit(" + JSON.stringify(row) + ")'>Editar</button>" +
+								"<button class='btn btn-danger btn-sm'  onclick='Delete(" + JSON.stringify(row) + ")'>Eliminar</button>";
+						}
+					}
+				]
+			});
+			$("#btnsave").click(function () {
+				var id_alumno = $("#id_alumno").val();
+				var nombre = $("#nombre").val();
+				var apellido = $("#apellido").val();
+				var documento = $("#documento").val();
+				if (nombre === '' || apellido === '') {
+					swal('Mensaje de advertencia', 'Complete los campos requeridos', 'error');
+				}
+				else {
+					var oAlumnos = {
+						id_alumno: $.trim($("#id_alumno").val()) == "" ? 0 : $("#id_alumno").val(),
+						nombre: $("#nombre").val(),
+						apellido: $("#apellido").val(),
+						documento: $("#documento").val()
+					};
+					$.post("api/ApiAlumnos", { oAlumno: oAlumnos })
+						.done(function (data) {
+							Reset();
+							ReloadGrid();
+							swal('Mensaje de confirmacion', 'Registro Grabado', 'success');
+						});
+				}
+			});
+			$("#btnAddnew").click(function () {
+				Reset();
+			});
+		});
+		function Edit(oAlumno) {
+			$("#id_alumno").val(oAlumno.id_alumno);
+			$("#nombre").val(oAlumno.nombre);
+			$("#apellido").val(oAlumno.apellido);
+			$("#documento").val(oAlumno.documento);
+		}
+		function Delete(oAlumno) {
+			var id = oAlumno.id_alumno;
+			$.ajax({
+				url: "api/ApiAlumnos/" + id,
+				type: "DELETE",
+				success: function (result) {
+					swal('Mensaje de confirmacion', 'Registro eliminado', 'success');
+					ReloadGrid();
+				}
+			});
+		}
+		function Reset() {
+			$("#id_alumno").val(0);
+			$("#nombre").val("");
+			$("#apellido").val("");
+			$("#documento").val(0);
+		}
+		function ReloadGrid() {
+			$("#tblalumno").DataTable().clear();
+			$("#tblalumno").DataTable().ajax.reload();
+		}
+	</script>
+}
+
